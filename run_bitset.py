@@ -12,10 +12,11 @@ def main():
     y = BitSet(1024*1024)
 
     print "setting bits..."
+    for i in random.sample(xrange(1024*1024), 500*1024):
+        x[i] = 1
 
-    for i in xrange(1, 500*1024):
-        x[random.randint(0, 1024*1024-1)] = 1
-        y[random.randint(0, 1024*1024-1)] = 1
+    for i in random.sample(xrange(1024*1024), 500*1024):
+        y[i] = 1
 
     print "x:  ", format(x, 32)
     print "y:  ", format(y, 32)
