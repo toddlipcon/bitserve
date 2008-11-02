@@ -7,9 +7,9 @@ from bitset import BitSet
 import unittest
 
 class Column:
-    def __init__(self):
+    def __init__(self, num_rows = 0):
         self.indices = {}
-        self.num_rows = 0
+        self.num_rows = num_rows
 
     def get_index(self, value):
         """Returns the bitset for the given value, or throws KeyError
@@ -39,7 +39,10 @@ class Column:
         """Append a new row with the given value. Creates a new bitset
         if this value hasn't been seen before."""
 
-        return self.append_set(set([value]))
+        if type(value) == set:
+            return self.append_set(value)
+        else:
+            return self.append_set(set([value]))
 
     def append_set(self, values):
         """Append a new row that has a set-typed value. Creates new bitsets
