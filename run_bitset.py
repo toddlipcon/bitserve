@@ -14,8 +14,8 @@ def main():
     print "setting bits..."
 
     for i in xrange(1, 500*1024):
-        x[random.randint(0, 1024*1024)] = 1
-        y[random.randint(0, 1024*1024)] = 1
+        x[random.randint(0, 1024*1024-1)] = 1
+        y[random.randint(0, 1024*1024-1)] = 1
 
     print "x:  ", format(x, 32)
     print "y:  ", format(y, 32)

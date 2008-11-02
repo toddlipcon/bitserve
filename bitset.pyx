@@ -15,7 +15,12 @@ cdef class BitSet:
   cdef unsigned char *data
   cdef size_t dlen
   
-  def __new__(self, initial_len=0):
+  def __new__(self, initial_bit_len=0):
+    cdef size_t initial_len
+    initial_len = initial_bit_len / 8
+    if initial_bit_len % 8 > 0:
+      initial_len = initial_len + 1
+      
     if initial_len > 0:
       self.data = <unsigned char *>calloc(initial_len, 1)
     else:
@@ -70,7 +75,7 @@ cdef class BitSet:
       bigger = self
       
     cdef BitSet result
-    result = BitSet(maxlen)
+    result = BitSet(maxlen * 8)
 
     cdef size_t i
 
@@ -118,7 +123,7 @@ cdef class BitSet:
       maxlen = self.dlen
       
     cdef BitSet result
-    result = BitSet(maxlen)
+    result = BitSet(maxlen * 8)
 
     cdef size_t i
 
