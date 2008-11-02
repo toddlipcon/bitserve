@@ -12,25 +12,44 @@ cdef extern from "strings.h":
   
 cdef class BitSet:
 
+  # The actual data buffer
   cdef unsigned char *data
-  cdef size_t dlen, bitlen
+
+  # The allocated size of the data buffer
+  cdef size_t dlen
+
+  # The retained number of bits - this might be smaller
+  # than dlen*8 since we can pre-allocated a large buffer
+  # to make things faster
+  cdef size_t bitlen
   
-  def __new__(self, initial_bit_len=0):
-    cdef size_t initial_len
-    initial_len = initial_bit_len / 8
-    if initial_bit_len % 8 > 0:
-      initial_len = initial_len + 1
+  def __new__(self, bit_capacity=0, initial_bit_len=0):
+    cdef size_t initial_dlen
+
+    initial_dlen = bit_capacity / 8
+    if bit_capacity % 8 > 0:
+      initial_dlen = initial_dlen + 1
       
-    if initial_len > 0:
-      self.data = <unsigned char *>calloc(initial_len, 1)
+    if initial_dlen > 0:
+      self.data = <unsigned char *>calloc(initial_dlen, 1)
     else:
       self.data = NULL
-    self.dlen = initial_len
+    self.dlen = initial_dlen
     self.bitlen = initial_bit_len
     
   def __dealloc__(self):
     if self.data != NULL:
       free(self.data)
+
+
+  def check(self):
+    """Check correctness of lengths"""
+    cdef int required_bits
+    required_bytes = self.bitlen / 8
+    if self.bitlen % 8 > 0:
+      required_bytes = required_bytes + 1
+
+    assert(self.dlen >= required_bytes)
 
   def __str__(self):
     cdef char *out
@@ -57,7 +76,7 @@ cdef class BitSet:
 
     need_len = byte + 1
     if self.dlen < need_len:
-      print "realloc (have %d need %d)" % (self.dlen, need_len)
+      #print "realloc (have %d need %d)" % (self.dlen, need_len)
       self.data = <unsigned char *>realloc(self.data, need_len)
       if self.data == NULL:
         raise "out of memory"
@@ -90,10 +109,13 @@ cdef class BitSet:
     return self.data[byte] & (1 << bit_in_byte)
 
   def __or__(BitSet self, BitSet other):
+    self.check()
+    other.check()
+    
     cdef size_t minlen, maxlen
     cdef BitSet bigger
 
-    if self.dlen < other.dlen:
+    if self.bitlen < other.bitlen:
       minlen = self.dlen
       maxlen = other.dlen
       bigger = other
@@ -103,7 +125,7 @@ cdef class BitSet:
       bigger = self
       
     cdef BitSet result
-    result = BitSet(maxlen * 8)
+    result = BitSet(bigger.bitlen, bigger.bitlen)
 
     cdef size_t i
 
@@ -140,10 +162,13 @@ cdef class BitSet:
     return result
 
 
-  def __and__(BitSet self, BitSet other):
+  def __and__(BitSet self, BitSet other):    
+    self.check()
+    other.check()
+
     cdef size_t minlen, maxlen, maxbitlen
 
-    if self.dlen < other.dlen:
+    if self.bitlen < other.bitlen:
       minlen = self.dlen
       maxlen = other.dlen
       maxbitlen = other.bitlen
@@ -153,7 +178,7 @@ cdef class BitSet:
       maxbitlen = self.bitlen
       
     cdef BitSet result
-    result = BitSet(maxbitlen)
+    result = BitSet(maxbitlen, maxbitlen)
 
     cdef size_t i
 
