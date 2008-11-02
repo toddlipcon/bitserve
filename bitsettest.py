@@ -117,6 +117,14 @@ class BitSetTestCase(unittest.TestCase):
         self.assertEqual(str(x & y), str(z))
         self.assertEqual(str(y & x), str(z))
         
+    def testInvert(self):
+        x = self.makeSet([0,1,0,0,1])
+        y = ~x
+        self.assertEqual(str(y), "10110")
+
+        # Extend it and make sure the "hidden" bits didn't get set to 1s
+        y[15] = 1
+        self.assertEqual(str(y), "1011000000000001")
 
 
 

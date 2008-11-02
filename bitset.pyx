@@ -108,6 +108,45 @@ cdef class BitSet:
 
     return self.data[byte] & (1 << bit_in_byte)
 
+  def __invert__(BitSet self):
+    cdef BitSet res
+    res = BitSet(self.bitlen, self.bitlen)
+
+    cdef int len_words, i
+    cdef unsigned int *self_int, *res_int
+
+    len_words = self.bitlen / 8 / sizeof(int)
+    self_int = <unsigned int *>self.data
+    res_int  = <unsigned int *>res.data
+
+    for 0 <= i < len_words:
+      res_int[i] = ~self_int[i]
+
+    i = i * sizeof(int)
+
+    # Copy over the rest of the full bytes
+    cdef len_bytes
+    len_bytes = self.bitlen / 8
+    
+    while i < len_bytes:
+      res.data[i] = ~self.data[i]
+      i = i + 1
+
+    cdef extra_bits
+    extra_bits = self.bitlen % 8
+
+    # we may have now some extra bits in the last byte
+    # so we need to copy just those bits
+
+    cdef unsigned char mask
+
+    if extra_bits > 0:
+      mask = (1 << (extra_bits)) - 1
+      res.data[i] = (~self.data[i]) & mask
+      
+    return res
+    
+
   def __or__(BitSet self, BitSet other):
     self.check()
     other.check()
