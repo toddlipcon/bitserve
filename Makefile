@@ -5,6 +5,6 @@ test:	all
 	python run_cheese.py
 
 clean:
-	@echo Cleaning Demos/callback
-	@rm -f cheese.c *.o *.so *~ core
+	@echo Cleaning 
+	@rm -f bitset.c *.o *.so *~ core
 	@rm -rf build
