@@ -39,7 +39,7 @@ class JunctionQuery:
     """A query that wraps two subqueries with a bitwise op"""
     OP_AND = 'AND'
     OP_OR  = 'OR'
-    
+
     def __init__(self, left, right, operator):
         self.left = left
         self.right = right
@@ -56,6 +56,18 @@ class JunctionQuery:
         else:
             raise Exception("unknown op: " + self.op)
     
+def MultiJunctionQuery(queries, operator):
+    assert len(queries) > 0
+    if len(queries) == 1:
+        return queries[0]
+    left = queries[0]
+    for q in queries[1:]:
+        left = JunctionQuery(left, q, operator)
+
+    return left
+    
+
+
 class ColumnQuery:
     """A query that specifies an equality or range condition on a column."""
 
