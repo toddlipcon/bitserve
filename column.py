@@ -1,4 +1,10 @@
+#!/usr/bin/env python
+#
+# Represents a column that is indexed by bitset indexes
+
 from bitset import BitSet
+
+import unittest
 
 class Column:
     def __init__(self):
@@ -6,9 +12,15 @@ class Column:
         self.num_rows = 0
 
     def get_index(self, value):
+        """Returns the bitset for the given value, or throws KeyError
+        if it does not exist."""
         return self.indices[value]
 
     def get_range_index(self, minval, maxval):
+        """Returns a bitset with 1s in any position where the value
+        falls between minval and maxval according to the python
+        comparison operators."""
+        
         bitsets = []
         for (val, bs) in self.indices.iteritems():
             if ((minval == None or val >= minval) and
@@ -24,45 +36,61 @@ class Column:
             return res
 
     def append(self, value):
-        need_new = True
+        """Append a new row with the given value. Creates a new bitset
+        if this value hasn't been seen before."""
+
+        return self.append_set(set([value]))
+
+    def append_set(self, values):
+        """Append a new row that has a set-typed value. Creates new bitsets
+        for any values that haven't been seen before.
+
+        The values parameter should be a python set() type.
+        """
 
         self.num_rows += 1
-        
+
+        remaining = set(values) # copy it
         for (existing_val, bs) in self.indices.iteritems():
-            if existing_val == value:
+            if existing_val in remaining:
+                remaining.discard(existing_val)
                 bs += 1
-                need_new = False
             else:
                 bs += 0
 
-        # if we didn't find a bitset for this value, make a new one
-        if need_new:
+        for new_val in remaining:
             new_bs = BitSet(self.num_rows)
             new_bs[self.num_rows - 1] = 1
-            self.indices[value] = new_bs
+            self.indices[new_val] = new_bs
 
         return self.num_rows
 
-def test():
-    x = BitSet(0)
-    x += 0
-    x += 1
-    x += 1
-    print x
+class ColumnTestCase(unittest.TestCase):
+    def testBasic(self):
+        col = Column()
 
-    col = Column()
+        vals = [1,2,3,2,4,5,0]
+        for val in vals:
+            col.append(val)
 
-    vals = [1,2,3,2,4,5,0]
-    for val in vals:
-        col.append(val)
+        self.assertEqual(str(col.get_index(2)),
+                         "0101000")
+        self.assertEqual(str(col.get_range_index(2,4)),
+                         "0111100")
 
-    twos = col.get_index(2)
-    print twos
+    def testSet(self):
+        col = Column()
 
-    my_range = col.get_range_index(2, 4)
-    print my_range
-    
+        col.append_set(['us','ca','gb'])
+        col.append_set(['us','za','au'])
+        col.append_set(['za','ca'])
+        col.append_set([])
 
+        self.assertEqual(str(col.get_index('us')),
+                         "1100")
+        self.assertEqual(str(col.get_index('ca')),
+                         "1010")
+        
 
 if __name__ == '__main__':
-    test()
+    unittest.main(defaultTest = "ColumnTestCase")
