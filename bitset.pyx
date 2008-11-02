@@ -3,6 +3,7 @@ cdef extern from "stdlib.h":
   void *malloc(size_t size)
   void *calloc(size_t nmemb, size_t size)
   void *realloc(void *ptr, size_t size)
+  void *memcpy(void *dest, void *src, size_t n)
   int free(void*)
   int sizeof()
 
@@ -59,8 +60,6 @@ cdef class BitSet:
     cdef size_t minlen, maxlen
     cdef BitSet bigger
 
-    cdef int other_dlen
-    
     if self.dlen < other.dlen:
       minlen = self.dlen
       maxlen = other.dlen
@@ -74,13 +73,35 @@ cdef class BitSet:
     result = BitSet(maxlen)
 
     cdef size_t i
+
+    # First copy as much as possible using
+    # machine word size
+    cdef unsigned int *a_int, *b_int, *r_int
+    a_int = <unsigned int *>self.data
+    b_int = <unsigned int *>other.data
+    r_int = <unsigned int *>result.data
+
+    cdef int minlen_words
+    minlen_words = minlen / sizeof(int)
+
     i = 0
+    while i < minlen_words:
+      r_int[i] = a_int[i] | b_int[i]
+      i = i + 1
+
+    # now we're going to use i in terms of bytes, so
+    # the counter needs to be turned into a byte counter
+    i = i * sizeof(int)
+
     while i < minlen:
       result.data[i] = self.data[i] | other.data[i]
       i = i + 1
 
-    while i < maxlen:
-      result.data[i] = bigger.data[i]
-      i = i + 1
-
+    # now we can just use memcpy to copy the rest
+    # since we're orring with 0s on the smaller side
+    cdef unsigned char *src, *dst
+    dst = result.data + i
+    src = bigger.data + i
+    memcpy(<void *>dst, <void *>src, maxlen - minlen)
+    
     return result
