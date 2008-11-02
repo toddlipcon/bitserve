@@ -13,7 +13,7 @@ cdef extern from "strings.h":
 cdef class BitSet:
 
   cdef unsigned char *data
-  cdef size_t dlen
+  cdef size_t dlen, bitlen
   
   def __new__(self, initial_bit_len=0):
     cdef size_t initial_len
@@ -26,10 +26,28 @@ cdef class BitSet:
     else:
       self.data = NULL
     self.dlen = initial_len
+    self.bitlen = initial_bit_len
     
   def __dealloc__(self):
     if self.data != NULL:
       free(self.data)
+
+  def __str__(self):
+    cdef char *out
+    out = <char *>malloc(self.bitlen + 1)
+
+    cdef i
+    for 0 <= i < self.bitlen:
+      if self.__getitem__(i):
+        out[i] = c'1'
+      else:
+        out[i] = c'0'
+
+    out[self.bitlen] = c'\0'
+    return out
+
+  def __len__(self):
+    return self.bitlen
 
   def __setitem__(self, int bit, int val):
     cdef size_t byte, bit_in_byte, need_len
@@ -47,9 +65,19 @@ cdef class BitSet:
             need_len - self.dlen)
       self.dlen = need_len
 
+    if bit >= self.bitlen:
+      self.bitlen = bit + 1
+
     cdef unsigned char bitmask
     bitmask = (val << bit_in_byte)
     self.data[byte] = self.data[byte] & (~bitmask) | bitmask
+
+
+  def __iadd__(self, int val):
+    cdef int bit
+    bit = self.bitlen
+    self.__setitem__(bit, val)
+    return self
 
   def __getitem__(self, int bit):
     cdef size_t byte, bit_in_byte
@@ -113,17 +141,19 @@ cdef class BitSet:
 
 
   def __and__(BitSet self, BitSet other):
-    cdef size_t minlen, maxlen
+    cdef size_t minlen, maxlen, maxbitlen
 
     if self.dlen < other.dlen:
       minlen = self.dlen
       maxlen = other.dlen
+      maxbitlen = other.bitlen
     else:
       minlen = other.dlen
       maxlen = self.dlen
+      maxbitlen = self.bitlen
       
     cdef BitSet result
-    result = BitSet(maxlen * 8)
+    result = BitSet(maxbitlen)
 
     cdef size_t i
 
