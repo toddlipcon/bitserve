@@ -105,3 +105,45 @@ cdef class BitSet:
     memcpy(<void *>dst, <void *>src, maxlen - minlen)
     
     return result
+
+
+  def __and__(BitSet self, BitSet other):
+    cdef size_t minlen, maxlen
+
+    if self.dlen < other.dlen:
+      minlen = self.dlen
+      maxlen = other.dlen
+    else:
+      minlen = other.dlen
+      maxlen = self.dlen
+      
+    cdef BitSet result
+    result = BitSet(maxlen)
+
+    cdef size_t i
+
+    # First copy as much as possible using
+    # machine word size
+    cdef unsigned int *a_int, *b_int, *r_int
+    a_int = <unsigned int *>self.data
+    b_int = <unsigned int *>other.data
+    r_int = <unsigned int *>result.data
+
+    cdef int minlen_words
+    minlen_words = minlen / sizeof(int)
+
+    i = 0
+    while i < minlen_words:
+      r_int[i] = a_int[i] & b_int[i]
+      i = i + 1
+
+    # now we're going to use i in terms of bytes, so
+    # the counter needs to be turned into a byte counter
+    i = i * sizeof(int)
+
+    while i < minlen:
+      result.data[i] = self.data[i] & other.data[i]
+      i = i + 1
+
+    # the rest of the bitset is just zeros
+    return result

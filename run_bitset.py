@@ -4,19 +4,46 @@ from bitset import BitSet
 import random
 from time import time
 
-x = BitSet(1024*1024)
-y = BitSet(1024*1024)
+def format(bs, num):
+    return "".join([str(int(bs[i] > 0)) for i in xrange(0, num)])
 
-print "setting bits..."
+def main():
+    x = BitSet(1024*1024)
+    y = BitSet(1024*1024)
 
-for i in xrange(1, 500*1024):
-    x[random.randint(0, 1024*1024)] = 1
-    y[random.randint(0, 1024*1024)] = 1
+    print "setting bits..."
 
-print "calculating bitwise or"
-st = time()
-for i in xrange(1, 100):
-    z = x | y
-et = time()
-print [z[i] for i in xrange(0,8)]
-print "done in %f" % ((et - st)/100.0)
+    for i in xrange(1, 500*1024):
+        x[random.randint(0, 1024*1024)] = 1
+        y[random.randint(0, 1024*1024)] = 1
+
+    print "x:  ", format(x, 32)
+    print "y:  ", format(y, 32)
+
+
+    print "calculating bitwise or"
+
+    st = time()
+    for i in xrange(1, 100):
+        z = x | y
+    et = time()
+    print "done in %f" % ((et - st)/100.0)
+
+    print "x|y:", format(z, 32)
+
+    ##############################
+
+    print "calculating bitwise and"
+
+    st = time()
+    for i in xrange(1, 100):
+        z = x & y
+    et = time()
+    print "done in %f" % ((et - st)/100.0)
+
+    print "x&y:", format(z, 32)
+
+
+if __name__ == '__main__':
+    main()
+
