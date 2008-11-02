@@ -34,7 +34,7 @@ cdef class BitSet:
 
     need_len = byte + 1
     if self.dlen < need_len:
-      print
+      print "realloc (have %d need %d)" % (self.dlen, need_len)
       self.data = <unsigned char *>realloc(self.data, need_len)
       if self.data == NULL:
         raise "out of memory"
