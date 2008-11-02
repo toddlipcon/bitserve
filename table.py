@@ -39,6 +39,7 @@ class JunctionQuery:
     """A query that wraps two subqueries with a bitwise op"""
     OP_AND = 'AND'
     OP_OR  = 'OR'
+    OP_ANDNOT = 'ANDNOT'
 
     def __init__(self, left, right, operator):
         self.left = left
@@ -51,11 +52,27 @@ class JunctionQuery:
         
         if self.op == self.OP_AND:
             return bs_left & bs_right
+
         elif self.op == self.OP_OR:
             return bs_left | bs_right
+
+        elif self.op == self.OP_ANDNOT:
+            # this will be optimized later
+            return bs_left & (~bs_right)
+
         else:
             raise Exception("unknown op: " + self.op)
+
+class NotQuery:
+    """Inverts its subquery"""
     
+    def __init__(self, query):
+        self.query = query
+
+    def resolve_to_bitset(self, table):
+        return ~(self.query.resolve_to_bitset(table))
+
+
 def MultiJunctionQuery(queries, operator):
     assert len(queries) > 0
     if len(queries) == 1:
@@ -138,6 +155,12 @@ class TableTestCase(unittest.TestCase):
         self.assertEqual(str(self.t.query(q)),
                          "1101")
 
+    def testNotQuery(self):
+        # not rock
+        q = NotQuery(ColumnQuery("genres", "rock"))
+        self.assertEqual(str(self.t.query(q)),
+                         "0010")
+    
 
 if __name__ == '__main__':
     unittest.main(defaultTest = "TableTestCase")
