@@ -27,6 +27,10 @@ class QueryShell(Cmd):
             print "query parsed: ", q
             print "Parse time (ms): ", ((t2 - t1)*1000)
             print "Exec  time (ms): ", ((t3 - t2)*1000)
+
+            print "%d results:", len(res)
+            print 
+            print res
             
         except Exception, e:
             print "exception: ", e

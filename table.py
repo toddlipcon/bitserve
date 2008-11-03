@@ -28,8 +28,7 @@ class Table:
 
     def query(self, q):
         bs = q.resolve_to_bitset(self)
-        # TODO: convert to list
-        return bs
+        return bs.get_bits()
 
     def get_column(self, name):
         return self.columns[name]
