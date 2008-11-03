@@ -17,6 +17,8 @@ K_IN  = Keyword('in', caseless=True)
 L_PAREN = Suppress('(')
 R_PAREN = Suppress(')')
 
+K_WHERE = Keyword('where', caseless=True)
+
 K_EQ = Keyword('=')
 K_LTE = Keyword('<=')
 K_GTE = Keyword('>=')
@@ -29,6 +31,10 @@ def parse_condition(toks):
     (col, op, val) = toks
     if op == '=':
         op = ColumnQuery.TYPE_EQ
+    elif op == '>=':
+        op = ColumnQuery.TYPE_GTE
+    elif op == '<=':
+        op = ColumnQuery.TYPE_LTE
     else:
         raise Exception("Bad op: " + op)
 
@@ -41,7 +47,16 @@ def parse_in_condition(toks):
     return MultiJunctionQuery(queries, JunctionQuery.OP_OR)
 
 def parse_junction(toks):
-    (lquery, op, rquery) = toks[0]
+    toks = toks[0]
+    queries = [toks[0]]
+
+    op = None
+    for i in xrange(1, len(toks), 2):
+        this_op = toks[i]
+        if op != None and this_op != op:
+            raise Exception("mixed ops in toks: " + toks)
+        op = this_op
+        queries.append(toks[i+1])
 
     op = op.upper()
     if op == 'AND':
@@ -51,7 +66,7 @@ def parse_junction(toks):
     else:
         raise Exception("bad logical op: " + op)
     
-    return JunctionQuery(lquery, rquery, op)
+    return MultiJunctionQuery(queries, op)
 
 def parse_not(toks):
     return NotQuery(toks[0][1])
@@ -67,6 +82,7 @@ realNum = Combine( Optional(arithSign) + ( Word( nums ) + "." + Optional( Word(n
             Optional( E + Optional(arithSign) + Word(nums) ) )
 intNum = Combine( Optional(arithSign) + Word( nums ) +
             Optional( E + Optional("+") + Word(nums) ) )
+intNum.setParseAction(lambda t: int(t[0]))
 
 columnRval = realNum | intNum | quotedString
 
@@ -89,6 +105,14 @@ whereExpression = operatorPrecedence(
     ("and", 2, opAssoc.LEFT, parse_junction),
     ("or", 2, opAssoc.LEFT, parse_junction),
     ])
+
+whereExpressionIncWhere = Suppress(K_WHERE) + whereExpression
+
+class Parser:
+    def parse(self, string):
+        return whereExpressionIncWhere.parseString(
+            string,
+            parseAll=True)[0]
 
 class ParserTestCase(unittest.TestCase):
     def ptest(self, form, string):
@@ -120,6 +144,14 @@ class ParserTestCase(unittest.TestCase):
             self.ptest(whereExpression,
                        "a = 'hello' and b = 'helloworld' or c = 'hi'"),
             '(((a = hello) AND (b = helloworld)) OR (c = hi))')
+
+
+        self.assertEqual(
+            self.ptest(whereExpression,
+                       "a = 'hello' and b = 'helloworld' and c = 'hi'"),
+            '(((a = hello) AND (b = helloworld)) AND (c = hi))')
+
+
 
         self.assertEqual(
             self.ptest(whereExpression,
