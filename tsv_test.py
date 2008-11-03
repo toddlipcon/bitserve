@@ -26,7 +26,9 @@ def load_table(filename):
                 return set()
             return set([int(s) for s in commasep.split(",")])
 
-        t.append_row({
+        t.append_row(
+            id,
+            {
             'status': status,
             'price': int(float(price)*100),
             'genre': split_ints(genres),

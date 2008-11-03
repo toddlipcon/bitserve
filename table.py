@@ -9,9 +9,10 @@ class Table:
     def __init__(self):
         self.columns = {}
         self.num_rows = 0
+        self.row_to_id = {}
 
 
-    def append_row(self, data):
+    def append_row(self, id, data):
         """Appends a row. data should be a dictionary
         whose keys are column names and values are either
         single values or sets"""
@@ -23,12 +24,16 @@ class Table:
             col_row_count = self.columns[col].append(val)
             assert col_row_count == new_row_count
 
+        if id != None:
+            self.row_to_id[self.num_rows] = id
+
         self.num_rows = new_row_count
         return new_row_count
 
     def query(self, q):
         bs = q.resolve_to_bitset(self)
-        return bs.get_bits()
+        set = bs.get_bits()
+        return [self.row_to_id[row] for row in set]
 
     def get_column(self, name):
         return self.columns[name]
@@ -119,16 +124,20 @@ class ColumnQuery:
 class TableTestCase(unittest.TestCase):
     def setUp(self):
         t = Table()
-        t.append_row({'price': 98,
+        t.append_row(1,
+                     {'price': 98,
                       'territories': set(['us','ca']),
                       'genres': set(['rock','pop','powerpop'])})
-        t.append_row({'price': 45,
+        t.append_row(3,
+                     {'price': 45,
                       'territories': set(['us','gb']),
                       'genres': set(['rock','pop','powerpop'])})
-        t.append_row({'price': 0,
+        t.append_row(9,
+                     {'price': 0,
                       'territories': set(['us','ca']),
                       'genres': set(['emo','powerpop'])})
-        t.append_row({'price': 0,
+        t.append_row(15,
+                     {'price': 0,
                       'territories': set(['us','ca','gb']),
                       'genres': set(['rock','blues','jazz'])})
         self.t = t
@@ -138,13 +147,16 @@ class TableTestCase(unittest.TestCase):
 
     def testColumnQuery(self):
         q = ColumnQuery("genres", "rock")
-        self.assertEqual(str(self.t.query(q)), "1101")
+        self.assertEqual(self.t.query(q),
+                         [1,3,15])
 
         q = ColumnQuery("price", 1, ColumnQuery.TYPE_GTE)
-        self.assertEqual(str(self.t.query(q)), "1100")
+        self.assertEqual(self.t.query(q),
+                         [1,3])
 
         q = ColumnQuery("price", 1, ColumnQuery.TYPE_LTE)
-        self.assertEqual(str(self.t.query(q)), "0011")
+        self.assertEqual(self.t.query(q),
+                         [9,15])
 
     def testJunctionQuery(self):
         # rock and pop
@@ -152,22 +164,22 @@ class TableTestCase(unittest.TestCase):
             ColumnQuery("genres", "rock"),
             ColumnQuery("genres", "pop"),
             JunctionQuery.OP_AND)
-        self.assertEqual(str(self.t.query(q)),
-                         "1100")
+        self.assertEqual(self.t.query(q),
+                         [1,3])
 
         # rock or pop
         q = JunctionQuery(
             ColumnQuery("genres", "rock"),
             ColumnQuery("genres", "pop"),
             JunctionQuery.OP_OR)
-        self.assertEqual(str(self.t.query(q)),
-                         "1101")
+        self.assertEqual(self.t.query(q),
+                         [1,3,15])
 
     def testNotQuery(self):
         # not rock
         q = NotQuery(ColumnQuery("genres", "rock"))
-        self.assertEqual(str(self.t.query(q)),
-                         "0010")
+        self.assertEqual(self.t.query(q),
+                         [9])
     
 
 if __name__ == '__main__':
