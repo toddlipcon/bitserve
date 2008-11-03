@@ -46,6 +46,9 @@ class JunctionQuery:
         self.right = right
         self.op = operator
 
+    def __str__(self):
+        return "(%s %s %s)" % (self.left, self.op, self.right)
+
     def resolve_to_bitset(self, table):
         bs_left = self.left.resolve_to_bitset(table)
         bs_right = self.right.resolve_to_bitset(table)
@@ -68,6 +71,9 @@ class NotQuery:
     
     def __init__(self, query):
         self.query = query
+
+    def __str__(self):
+        return '(NOT %s)' % str(self.query)
 
     def resolve_to_bitset(self, table):
         return ~(self.query.resolve_to_bitset(table))
@@ -96,6 +102,9 @@ class ColumnQuery:
         self.colname = colname
         self.type = type
         self.param = param
+
+    def __str__(self):
+        return '(%s %s %s)' % (self.colname, self.type, str(self.param))
 
     def resolve_to_bitset(self, table):
         col = table.get_column(self.colname)
