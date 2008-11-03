@@ -5,6 +5,8 @@ from pyparsing import Keyword, QuotedString, Suppress, Group, Word, Optional, \
      Forward, CaselessLiteral, oneOf, Combine, nums, delimitedList, ZeroOrMore, \
      operatorPrecedence, opAssoc
 
+pyparsing.ParserElement.enablePackrat()
+
 from table import ColumnQuery, JunctionQuery, NotQuery, MultiJunctionQuery
 
 import unittest
@@ -93,9 +95,8 @@ inCondition.setParseAction(parse_in_condition)
 
 whereCondition = (
     binCondition |
-    inCondition |
+    inCondition 
 #    ( columnName + in_ + "(" + selectStmt + ")" ) |
-    ( "(" + whereExpression + ")" )
     )
 
 whereExpression = operatorPrecedence(
