@@ -126,6 +126,18 @@ class BitSetTestCase(unittest.TestCase):
         y[15] = 1
         self.assertEqual(str(y), "1011000000000001")
 
+    def testGetBits(self):
+        def dotest(l):
+            l.sort()
+            x = BitSet()
+            for i in l:
+                x[i] = 1
+            self.assertEqual(x.get_bits(), l)
+
+        dotest([0,3,5,8])
+        dotest([23,54,1,29])
+        
+
 
 
 def suite():

@@ -108,6 +108,36 @@ cdef class BitSet:
 
     return self.data[byte] & (1 << bit_in_byte)
 
+  def get_bits(self):
+    cdef size_t cur_bit, cur_byte, num_bytes, i, j
+
+    num_bytes = self.bitlen / 8
+
+    cdef list res
+    res = []
+
+    cur_bit = 0
+    for 0 <= i < num_bytes:
+      cur_byte = self.data[i]
+      
+      for 0 <= j < 8:
+        if cur_byte & 0x01:
+          res.append(cur_bit)
+        cur_bit = cur_bit + 1
+        cur_byte = cur_byte >> 1
+
+    cdef size_t extra_bits
+    extra_bits = self.bitlen - cur_bit
+    if extra_bits:
+      cur_byte = self.data[num_bytes]
+      for 0 <= i < extra_bits:
+        if cur_byte & 0x01:
+          res.append(cur_bit)
+        cur_bit = cur_bit + 1
+        cur_byte = cur_byte >> 1
+
+    return res
+    
   def __invert__(BitSet self):
     cdef BitSet res
     res = BitSet(self.bitlen, self.bitlen)
