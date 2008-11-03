@@ -102,8 +102,8 @@ class BitServeHandler:
     
 def load_albums_5k(handler):
     handler.load_table(
-        "albums_5k",
-        "../albums_5k.tsv",
+        "albums_10k",
+        "albums_10k.tsv",
         [LoadColumn({'is_primary_key': 1,
                      'name':"id",
                      'type': LoadType.INT}),
