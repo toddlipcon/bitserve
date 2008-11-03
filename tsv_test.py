@@ -1,11 +1,13 @@
 #!/usr/bin/python
 
-from table import Table, JunctionQuery, ColumnQuery, MultiJunctionQuery
+from shell import QueryShell
+from table import Table
+
 import sys
-import time
+
 def main():
     t = load_table(sys.argv[1])
-    try_queries(t)
+    run_shell(t)
 
 def load_table(filename):
     t = Table()
@@ -34,24 +36,8 @@ def load_table(filename):
 
     return t
 
-def try_queries(t):
-    # Come up with the disjunction for all of the genres we care abotu
-    genre_qs = [ColumnQuery('genre', id) for id in [59, 60]]
-    genre_set_q = MultiJunctionQuery(genre_qs, JunctionQuery.OP_OR)
-
-    status_q = ColumnQuery('status', 'NORMAL')
-    free_q = ColumnQuery('price', 0)
-
-    q = MultiJunctionQuery([genre_set_q, free_q, status_q],
-                                     JunctionQuery.OP_AND)
-
-    st = time.time()
-    for i in xrange(1000):
-        res = t.query(q)
-    et = time.time()
-    
-    print "query time: %fms" % (et - st)
-
+def run_shell(t):
+    QueryShell(t).cmdloop()
 
 if __name__ == '__main__':
     if True:
