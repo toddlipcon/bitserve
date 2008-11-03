@@ -2,7 +2,7 @@
 
 from bitset import BitSet
 
-import os,sys
+import os,sys,time
 
 my_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.insert(0, my_dir + '/gen-py')
@@ -85,13 +85,21 @@ class BitServeHandler:
             raise NoSuchTableException()
 
         try:
+            st = time.time()
             q = self.parser.parse(query)
+            et = time.time()
+            print "parse time: %fms" % ((et - st)*1000)
         except Exception, e:
             print str(e)
             raise ParseException({'message': str(e)})
 
-        return self.tables[table].query(q)
-
+        st = time.time()
+        res = self.tables[table].query(q)
+        et = time.time()
+        print "execution time: %fms" % ((et - st)*1000)
+        print "%d results" % len(res)
+        return res
+    
 def load_albums_5k(handler):
     handler.load_table(
         "albums_5k",
