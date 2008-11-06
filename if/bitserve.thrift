@@ -26,6 +26,7 @@ exception ParseException {
 
 service BitServe {
 
+  i32 load_table_spec(1:string name, 2:string spec_path)
   i32 load_table(1:string name, 2:string path, 3:list<LoadColumn> columns)
   
   list<i32> query(1:string table,

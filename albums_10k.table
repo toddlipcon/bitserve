@@ -1,0 +1,14 @@
+{"path": "albums_10k.tsv",
+        "columns": [
+            {"name":"id",
+                    "is_primary_key": 1,
+                    "type": LoadType.INT},
+            {"name": "status"},
+            {"name": "price",
+                    "type": LoadType.CENTS_FLOAT},
+            {"name": "genre",
+                    "type": LoadType.JOINED_INTS},
+            {"name": "policy",
+                    "type": LoadType.STRING},
+            {"name": "country",
+                    "type": LoadType.JOINED_INTS}]}

@@ -40,6 +40,14 @@ class BitServeHandler:
             ParseType.PARSE_JSON: JsonParser()
             }
 
+    def load_table_spec(self, name, spec_path):
+        obj = eval(file(spec_path).read(), {'LoadType': LoadType})
+        columns = []
+        for col_json in obj['columns']:
+            columns.append(LoadColumn(col_json))
+        return self.load_table(name, obj['path'], columns)
+
+
     def load_table(self, name, path, columns):
         t = Table()
         seen_header = False
@@ -104,29 +112,9 @@ class BitServeHandler:
         print "execution time: %fms" % ((et - st)*1000)
         print "%d results" % len(res)
         return res
-    
-def load_albums_5k(handler):
-    handler.load_table(
-        "albums_10k",
-        "albums_10k.tsv",
-        [LoadColumn({'is_primary_key': 1,
-                     'name':"id",
-                     'type': LoadType.INT}),
-         LoadColumn({'name': "status"}),
-         LoadColumn({'name': "price",
-                     'type': LoadType.CENTS_FLOAT}),
-         LoadColumn({'name': "genre",
-                     'type': LoadType.JOINED_INTS}),
-         LoadColumn({'name': "policy",
-                     'type': LoadType.STRING}),
-         LoadColumn({'name': "country",
-                     'type': LoadType.JOINED_INTS})])
 
 def main(port=9400):
     handler = BitServeHandler()
-
-
-    load_albums_5k(handler)
 
     processor = BitServe.Processor(handler)
     transport = TSocket.TServerSocket(port)
