@@ -15,7 +15,9 @@ from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
 from table import Table
-from queryparser import Parser
+from queryparser import Parser as SqlParser
+from jsonparser import JsonParser
+
 
 def split_ints(commasep):
     if commasep == '':
@@ -33,7 +35,10 @@ class BitServeHandler:
 
     def __init__(self):
         self.tables = {}
-        self.parser = Parser()
+        self.PARSERS = {
+            ParseType.PARSE_SQL: SqlParser(),
+            ParseType.PARSE_JSON: JsonParser()
+            }
 
     def load_table(self, name, path, columns):
         t = Table()
@@ -80,13 +85,13 @@ class BitServeHandler:
         return t.num_rows
 
     
-    def query(self, table, query):
+    def query(self, table, query, parsertype):
         if table not in self.tables:
             raise NoSuchTableException()
 
         try:
             st = time.time()
-            q = self.parser.parse(query)
+            q = self.PARSERS[parsertype].parse(query)
             et = time.time()
             print "parse time: %fms" % ((et - st)*1000)
         except Exception, e:

@@ -101,6 +101,7 @@ class ColumnQuery:
     TYPE_EQ = '='
     TYPE_LTE = '<='
     TYPE_GTE = '>='
+    TYPE_NEQ = '!='
     
     def __init__(self, colname, param, type = TYPE_EQ):
         self.colname = colname
@@ -119,6 +120,8 @@ class ColumnQuery:
             return col.get_range_index(None, self.param)
         elif self.type == self.TYPE_GTE:
             return col.get_range_index(self.param, None)
+        elif self.type == self.TYPE_NEQ:
+            return ~(col.get_index(self.param))
 
 
 class TableTestCase(unittest.TestCase):
