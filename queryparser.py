@@ -37,6 +37,8 @@ def parse_condition(toks):
         op = ColumnQuery.TYPE_GTE
     elif op == '<=':
         op = ColumnQuery.TYPE_LTE
+    elif op == '!=':
+        op = ColumnQuery.TYPE_NEQ
     else:
         raise Exception("Bad op: " + op)
 
