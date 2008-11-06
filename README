@@ -1,0 +1,85 @@
+REQUIREMENTS
+------------------------------------------------------------
+
+You'll need the following to build and use bitserve
+
+- pyparsing v1.50
+- pyrex v0.9.7
+- simplejson
+- thrift
+
+
+BUILD
+------------------------------------------------------------
+
+1) Generate thrift interface
+
+thrift -gen py if/bitserve.thrift
+
+2) Generate bitset class using pyrex
+
+make
+
+
+GETTING STARTED
+------------------------------------------------------------
+
+1) Start server
+
+./bitserve.py
+
+2) Load a table
+
+./gen-py/bitserve/BitServe-remote -h 127.0.0.1:9400 load_table_spec albums_10k albums_10k.table
+
+You should see the bitserve process loading, and then you should see the response that 9999
+rows were loaded.
+
+3) Run a query
+
+./gen-py/bitserve/BitServe-remote -h 127.0.0.1:9400 query albums_10k "where genre = 70" ParseType.PARSE_SQL | wc -l
+
+4) More complicated query
+
+./gen-py/bitserve/BitServe-remote -h 127.0.0.1:9400 query albums_10k "where genre in (59,60) and ((policy = 'ALLOW' and country != 840) or (policy = 'DENY' and country = 840)) and price != 0" ParseType.PARSE_SQL | wc -l
+
+Note that the parse time probably is far bigger than the execution time. This is because
+pyparsing is pure python whereas the execution is mostly happening in C.
+
+5) Same query using the JSON query syntax
+
+./gen-py/bitserve/BitServe-remote -h 127.0.0.1:9400 query albums_10k '
+  ["and", ["in", "genre", [59, 60]],
+          ["or", ["and", ["=", "policy", "ALLOW"],
+                         ["!=", "country", 840]],
+                 ["and", ["=", "policy", "DENY"],
+                         ["=", "country", 840]]],
+          ["!=", "price", 0]]
+' ParseType.PARSE_JSON | wc -l
+
+Note the much faster parse time for this method of specifying the query despite it being a bit
+more obnoxious to write by hand (unless you're a lisp programmer!)
+
+
+6) Take a look at albums_10k.table and albums_10.tsv. A few interesting things to note:
+
+  - The genre and country columns are JOINED_INTS type columns. These are multi-valued
+    so searching for "genre = 59 and genre = 60" is not necessarily a null set.
+    These types of queries are obnoxious in SQL but fast with bit indexes.
+
+  - Numeric columns are indexed the same way as non-numeric columns. The only difference
+    is the way in which inequality conditions are used.
+
+  - The primary key column is not indexed and can't be queried. It's used simply to
+    translate between row numbers and IDs.
+
+
+WORK TO BE DONE
+------------------------------------------------------------
+
+- would probably be a lot more useful if you could update or insert data
+
+- for large databases or high-cardinality columns we need to compress the bit indices
+  with something like BBC (Byte-aligned Bit Code) or WAH (Word Aligned Hybrid)
+
+- loading is currently fairly slow (~1000 rows/sec) - can probably be improved
