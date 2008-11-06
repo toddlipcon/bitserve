@@ -94,6 +94,7 @@ class BitServeHandler:
 
     
     def query(self, table, query, parsertype):
+        print "\nQuery on %s\n" % table
         if table not in self.tables:
             raise NoSuchTableException()
 
@@ -105,6 +106,8 @@ class BitServeHandler:
         except Exception, e:
             print str(e)
             raise ParseException({'message': str(e)})
+
+        print "parsed query: ", q
 
         st = time.time()
         res = self.tables[table].query(q)
@@ -121,6 +124,8 @@ def main(port=9400):
     tfactory = TTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
     server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
+
+    print "Listening on port %d" % port
     server.serve()
 
 
